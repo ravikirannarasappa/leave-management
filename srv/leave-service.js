@@ -1,6 +1,6 @@
 import cds from "@sap/cds";
 
-const { SELECT } = cds.ql;
+const { SELECT, UPDATE } = cds.ql;
 
 export default class LeaveService extends cds.ApplicationService {
   init() {
@@ -52,7 +52,70 @@ export default class LeaveService extends cds.ApplicationService {
         return req.error(400, "These dates overlap with an existing leave request");
       }
     });
+    // Approve a pending request and deduct the balance
+    this.on("approve", LeaveRequests, async (req) => {
+      const key = req.params[0];
+      const ID = key.ID ?? key;
 
+      const request = await SELECT.one.from(LeaveRequests).where({ ID });
+      if (!request) {
+        return req.error(404, "Leave request not found");
+      }
+      if (request.status !== "Pending") {
+        return req.error(400, `Only Pending requests can be approved (current status: ${request.status})`);
+      }
+
+      await UPDATE(LeaveBalances)
+        .set({ remainingDays: { "-=": request.days } })
+        .where({
+          employee_ID: request.employee_ID,
+          leaveType_ID: request.leaveType_ID,
+          year: new Date(request.startDate).getFullYear(),
+        });
+
+      await UPDATE(LeaveRequests).set({ status: "Approved" }).where({ ID });
+    });
+        // Reject a pending request (no balance change)
+    this.on("reject", LeaveRequests, async (req) => {
+      const key = req.params[0];
+      const ID = key.ID ?? key;
+
+      const request = await SELECT.one.from(LeaveRequests).where({ ID });
+      if (!request) {
+        return req.error(404, "Leave request not found");
+      }
+      if (request.status !== "Pending") {
+        return req.error(400, `Only Pending requests can be rejected (current status: ${request.status})`);
+      }
+
+      await UPDATE(LeaveRequests).set({ status: "Rejected" }).where({ ID });
+    });
+
+    // Cancel a request (refund days if it was already approved)
+    this.on("cancel", LeaveRequests, async (req) => {
+      const key = req.params[0];
+      const ID = key.ID ?? key;
+
+      const request = await SELECT.one.from(LeaveRequests).where({ ID });
+      if (!request) {
+        return req.error(404, "Leave request not found");
+      }
+      if (!["Pending", "Approved"].includes(request.status)) {
+        return req.error(400, `Cannot cancel a request that is ${request.status}`);
+      }
+
+      if (request.status === "Approved") {
+        await UPDATE(LeaveBalances)
+          .set({ remainingDays: { "+=": request.days } })
+          .where({
+            employee_ID: request.employee_ID,
+            leaveType_ID: request.leaveType_ID,
+            year: new Date(request.startDate).getFullYear(),
+          });
+      }
+
+      await UPDATE(LeaveRequests).set({ status: "Cancelled" }).where({ ID });
+    });
     return super.init();
   }
 }
