@@ -1,0 +1,15 @@
+.container { max-width: 900px; margin: 40px auto; font-family: Arial, sans-serif; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+th { background: #f3f6fa; }
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 13px; }
+.Pending { background: #fff3cd; color: #856404; }
+.Approved { background: #d4edda; color: #155724; }
+.Rejected { background: #f8d7da; color: #721c24; }
+.Cancelled { background: #e2e3e5; color: #383d41; }
+.error { color: #b00020; }
+.form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.form input, .form select { padding: 8px; }
+.form input[name="reason"] { flex: 1; min-width: 160px; }
+button { padding: 8px 14px; cursor: pointer; }
+.success { color: #155724; }
