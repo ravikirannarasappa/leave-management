@@ -7,6 +7,7 @@ function App() {
   const [requests, setRequests] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
+  const [balances, setBalances] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -24,6 +25,12 @@ function App() {
     setRequests(data.value);
   };
 
+  const loadBalances = async () => {
+    const res = await fetch(`${API}/LeaveBalances?$expand=employee,leaveType`);
+    const data = await res.json();
+    setBalances(data.value);
+  };
+
   const loadLookups = async () => {
     const e = await (await fetch(`${API}/Employees`)).json();
     const t = await (await fetch(`${API}/LeaveTypes`)).json();
@@ -34,6 +41,7 @@ function App() {
   useEffect(() => {
     loadRequests();
     loadLookups();
+    loadBalances();
   }, []);
 
   // Update one form field
@@ -52,7 +60,6 @@ function App() {
     });
 
     if (!res.ok) {
-      // Show the message from our backend rules
       const data = await res.json();
       setError(data.error?.message || "Something went wrong");
       return;
@@ -61,7 +68,9 @@ function App() {
     setSuccess("Leave request submitted");
     setForm({ ...form, startDate: "", endDate: "", reason: "" });
     loadRequests();
+    loadBalances();
   };
+
   // Call approve / reject / cancel on one request
   const doAction = async (id, action) => {
     setError("");
@@ -81,7 +90,9 @@ function App() {
 
     setSuccess(`Action "${action}" completed`);
     loadRequests();
+    loadBalances();
   };
+
   return (
     <div className="container">
       <h1>Leave Management</h1>
@@ -111,6 +122,28 @@ function App() {
       {error && <p className="error">{error}</p>}
       {success && <p className="success">{success}</p>}
 
+      <h2>Leave balance</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Leave type</th>
+            <th>Year</th>
+            <th>Days left</th>
+          </tr>
+        </thead>
+        <tbody>
+          {balances.map((b) => (
+            <tr key={b.ID}>
+              <td>{b.employee?.name}</td>
+              <td>{b.leaveType?.name}</td>
+              <td>{b.year}</td>
+              <td>{b.remainingDays}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       <h2>Leave requests</h2>
       <table>
         <thead>
@@ -135,7 +168,7 @@ function App() {
               <td>
                 <span className={`badge ${r.status}`}>{r.status}</span>
               </td>
-                            <td>
+              <td>
                 {r.status === "Pending" && (
                   <>
                     <button onClick={() => doAction(r.ID, "approve")}>Approve</button>{" "}
