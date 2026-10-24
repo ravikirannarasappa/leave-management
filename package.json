@@ -11,5 +11,29 @@
   "scripts": {
     "start": "cds-serve"
   },
-  "private": true
+  "private": true,
+    "cds": {
+    "requires": {
+      "auth": {
+        "kind": "mocked",
+        "users": {
+          "ravi": {
+            "password": "ravi123",
+            "roles": ["Employee"],
+            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000003" }
+          },
+          "suresh": {
+            "password": "suresh123",
+            "roles": ["Employee", "Manager"],
+            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000002" }
+          },
+          "priya": {
+            "password": "priya123",
+            "roles": ["Employee", "HR"],
+            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000001" }
+          }
+        }
+      }
+    }
+  }
 }
