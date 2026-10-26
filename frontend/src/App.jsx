@@ -133,6 +133,21 @@ function App() {
   const isApprover = me.roles.includes("Manager") || me.roles.includes("HR");
     const count = (status) => requests.filter((r) => r.status === status).length;
   const cards = ["Pending", "Approved", "Rejected", "Cancelled"];
+    // Save one employee's requests as a CSV file (opens in Excel)
+  const downloadCsv = (empName) => {
+    const rows = requests.filter((r) => r.employee?.name === empName);
+    const header = "Employee,Leave type,From,To,Days,Status,Reason";
+    const lines = rows.map((r) =>
+      [r.employee?.name, r.leaveType?.name, r.startDate, r.endDate, r.days, r.status, r.reason ?? ""]
+        .map((v) => `"${String(v).replaceAll('"', '""')}"`)
+        .join(",")
+    );
+    const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${empName}-leave.csv`;
+    a.click();
+  };
 
   // ---------- Main screen ----------
   return (
@@ -203,7 +218,7 @@ function App() {
               <td>{r.endDate}</td>
               <td>{r.days}</td>
               <td><span className={`badge ${r.status}`}>{r.status}</span></td>
-              <td>
+                           <td>
                 {isApprover && r.status === "Pending" && (
                   <>
                     <button onClick={() => doAction(r.ID, "approve")}>Approve</button>{" "}
@@ -211,8 +226,11 @@ function App() {
                   </>
                 )}
                 {(r.status === "Pending" || r.status === "Approved") && (
-                  <button onClick={() => doAction(r.ID, "cancel")}>Cancel</button>
+                  <>
+                    <button onClick={() => doAction(r.ID, "cancel")}>Cancel</button>{" "}
+                  </>
                 )}
+                <button onClick={() => downloadCsv(r.employee?.name)}>Download</button>
               </td>
             </tr>
           ))}

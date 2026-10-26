@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
+    "@cap-js/sqlite": "^3.1.2",
     "@sap/cds": "^10"
   },
-  "devDependencies": {
-    "@cap-js/sqlite": "^3.1.2"
-  },
-   "scripts": {
+  "scripts": {
     "start": "cds-serve --in-memory?"
   },
   "private": true,
