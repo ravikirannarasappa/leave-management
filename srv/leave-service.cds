@@ -32,4 +32,5 @@ service LeaveService @(requires: 'authenticated-user') {
     action reject();
     action cancel();
   };
+    function me() returns { id : String; roles : many String; employee_ID : String };
 }

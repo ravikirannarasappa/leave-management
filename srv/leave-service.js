@@ -6,7 +6,7 @@ export default class LeaveService extends cds.ApplicationService {
   init() {
     const { LeaveRequests, LeaveBalances } = this.entities;
 
-    // Runs before a new leave request is saved
+    // Rules before a new leave request is saved
     this.before("CREATE", LeaveRequests, async (req) => {
       const { employee_ID, leaveType_ID, startDate, endDate } = req.data;
 
@@ -52,6 +52,7 @@ export default class LeaveService extends cds.ApplicationService {
         return req.error(400, "These dates overlap with an existing leave request");
       }
     });
+
     // Approve a pending request and deduct the balance
     this.on("approve", LeaveRequests, async (req) => {
       const key = req.params[0];
@@ -75,7 +76,8 @@ export default class LeaveService extends cds.ApplicationService {
 
       await UPDATE(LeaveRequests).set({ status: "Approved" }).where({ ID });
     });
-        // Reject a pending request (no balance change)
+
+    // Reject a pending request (no balance change)
     this.on("reject", LeaveRequests, async (req) => {
       const key = req.params[0];
       const ID = key.ID ?? key;
@@ -116,6 +118,14 @@ export default class LeaveService extends cds.ApplicationService {
 
       await UPDATE(LeaveRequests).set({ status: "Cancelled" }).where({ ID });
     });
+
+    // Tell the frontend who is logged in
+    this.on("me", (req) => ({
+      id: req.user.id,
+      roles: ["Employee", "Manager", "HR"].filter((r) => req.user.is(r)),
+      employee_ID: req.user.attr?.employee_ID,
+    }));
+
     return super.init();
   }
 }
