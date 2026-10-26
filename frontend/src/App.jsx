@@ -4,6 +4,7 @@ import "./App.css";
 const API = "/odata/v4/leave";
 
 function App() {
+    const [reportEmp, setReportEmp] = useState("");
   const [auth, setAuth] = useState(sessionStorage.getItem("auth") || "");
   const [me, setMe] = useState(null);
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
@@ -134,18 +135,35 @@ function App() {
     const count = (status) => requests.filter((r) => r.status === status).length;
   const cards = ["Pending", "Approved", "Rejected", "Cancelled"];
     // Save one employee's requests as a CSV file (opens in Excel)
-  const downloadCsv = (empName) => {
-    const rows = requests.filter((r) => r.employee?.name === empName);
-    const header = "Employee,Leave type,From,To,Days,Status,Reason";
-    const lines = rows.map((r) =>
-      [r.employee?.name, r.leaveType?.name, r.startDate, r.endDate, r.days, r.status, r.reason ?? ""]
-        .map((v) => `"${String(v).replaceAll('"', '""')}"`)
-        .join(",")
+   // Unique list of employees (from the balance table)
+  const people = [...new Map(balances.map((b) => [b.employee_ID, b.employee?.name])).entries()];
+
+  // Download one employee's full leave history + summary
+  const downloadReport = () => {
+    if (!reportEmp) return;
+    const name = people.find(([id]) => id === reportEmp)?.[1] || "employee";
+    const q = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
+    const rows = requests.filter((r) => r.employee_ID === reportEmp);
+
+    const lines = [`Leave history for ${name}`, "Leave type,From,To,Days,Status,Reason"];
+    rows.forEach((r) =>
+      lines.push([r.leaveType?.name, r.startDate, r.endDate, r.days, r.status, r.reason].map(q).join(","))
     );
-    const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
+
+    lines.push("", "Summary,Days taken (approved),Days left");
+    balances
+      .filter((b) => b.employee_ID === reportEmp)
+      .forEach((b) => {
+        const taken = rows
+          .filter((r) => r.status === "Approved" && r.leaveType_ID === b.leaveType_ID)
+          .reduce((sum, r) => sum + r.days, 0);
+        lines.push([b.leaveType?.name, taken, b.remainingDays].map(q).join(","));
+      });
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${empName}-leave.csv`;
+    a.download = `${name}-leave-report.csv`;
     a.click();
   };
 
@@ -200,7 +218,20 @@ function App() {
           ))}
         </tbody>
       </table>
-
+      {isApprover && (
+        <>
+          <h2>Employee report</h2>
+          <div className="form">
+            <select value={reportEmp} onChange={(e) => setReportEmp(e.target.value)}>
+              <option value="">Select employee</option>
+              {people.map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+            </select>
+            <button onClick={downloadReport}>Download report</button>
+          </div>
+        </>
+      )}
       <h2>Leave requests</h2>
       <table>
         <thead>
@@ -230,7 +261,6 @@ function App() {
                     <button onClick={() => doAction(r.ID, "cancel")}>Cancel</button>{" "}
                   </>
                 )}
-                <button onClick={() => downloadCsv(r.employee?.name)}>Download</button>
               </td>
             </tr>
           ))}
