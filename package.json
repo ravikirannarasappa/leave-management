@@ -6,31 +6,45 @@
     "@sap/cds": "^10"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^3"
+    "@cap-js/sqlite": "^3.1.2"
   },
-  "scripts": {
-    "start": "cds-serve"
+   "scripts": {
+    "start": "cds-serve --in-memory?"
   },
   "private": true,
-    "cds": {
+  "cds": {
     "requires": {
       "auth": {
         "kind": "mocked",
         "users": {
           "ravi": {
             "password": "ravi123",
-            "roles": ["Employee"],
-            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000003" }
+            "roles": [
+              "Employee"
+            ],
+            "attr": {
+              "employee_ID": "e1000000-0000-0000-0000-000000000003"
+            }
           },
           "suresh": {
             "password": "suresh123",
-            "roles": ["Employee", "Manager"],
-            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000002" }
+            "roles": [
+              "Employee",
+              "Manager"
+            ],
+            "attr": {
+              "employee_ID": "e1000000-0000-0000-0000-000000000002"
+            }
           },
           "priya": {
             "password": "priya123",
-            "roles": ["Employee", "HR"],
-            "attr": { "employee_ID": "e1000000-0000-0000-0000-000000000001" }
+            "roles": [
+              "Employee",
+              "HR"
+            ],
+            "attr": {
+              "employee_ID": "e1000000-0000-0000-0000-000000000001"
+            }
           }
         }
       }

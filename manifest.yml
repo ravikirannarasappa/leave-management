@@ -1,0 +1,8 @@
+applications:
+  - name: leave-management
+    memory: 512M
+    random-route: true
+    buildpacks:
+      - nodejs_buildpack
+    env:
+      NODE_ENV: development
