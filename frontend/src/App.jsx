@@ -131,6 +131,8 @@ function App() {
   if (!me) return <div className="container">Loading...</div>;
 
   const isApprover = me.roles.includes("Manager") || me.roles.includes("HR");
+    const count = (status) => requests.filter((r) => r.status === status).length;
+  const cards = ["Pending", "Approved", "Rejected", "Cancelled"];
 
   // ---------- Main screen ----------
   return (
@@ -142,7 +144,14 @@ function App() {
           <button onClick={logout}>Logout</button>
         </div>
       </div>
-
+      <div className="cards">
+        {cards.map((s) => (
+          <div key={s} className={`card ${s}`}>
+            <div className="num">{count(s)}</div>
+            <div>{s}</div>
+          </div>
+        ))}
+      </div>
       <h2>Apply for leave</h2>
       <div className="form">
         <select name="leaveType_ID" value={form.leaveType_ID} onChange={handleChange}>
